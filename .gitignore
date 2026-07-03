@@ -1,0 +1,42 @@
+# Ignore some folders
+data/
+results/
+
+# Data files
+*.csv
+*.nii.gz
+
+# Environments
+.venv
+.env*
+env/
+venv/
+
+# ---> Python
+# Byte-compiled / optimized / DLL files
+**/__pycache__/
+*$py.class
+
+# Jupyter NB Checkpoints
+.ipynb_checkpoints/
+
+# VS Code
+.vscode/
+*-code-workspace
+
+# Stores VSCode versions used for testing VSCode extensions
+.vscode-test
+
+# Python-generated files for packaging
+build/
+dist/
+wheels/
+*.egg
+*.egg-info
+
+
+# Local History for Visual Studio Code
+.history/
+
+# Built Visual Studio Code Extensions
+*.vsix
