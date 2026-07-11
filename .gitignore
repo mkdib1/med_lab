@@ -1,5 +1,6 @@
 # Ignore some folders
 data/
+xdata/
 results/
 
 # Data files
