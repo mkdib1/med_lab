@@ -1,0 +1,32 @@
+{
+    "margin": 10,
+    "pos_neg": [
+        1,
+        1
+    ],
+    "num_samples": 6,
+    "flip_prob": 0.4,
+    "affine_prob": 0.3,
+    "rotate_range": [
+        0.08,
+        0.08,
+        0.08
+    ],
+    "scale_range": [
+        0.02,
+        0.02,
+        0.02
+    ],
+    "translate_range": [
+        8,
+        8,
+        5
+    ],
+    "noise_prob": 0.3,
+    "noise_std": 0.03,
+    "contrast_prob": 0.3,
+    "gamma": [
+        0.9,
+        1.1
+    ]
+}
