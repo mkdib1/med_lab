@@ -136,9 +136,9 @@ def build_train_val_test_loaders(data: list[dict[str, str]],
     if train_augm_transforms is None:
         params, train_augm_transforms = build_augmented_train_transforms()
 
-    train_data = SmartCacheDataset(data=train_files, transform=train_augm_transforms, replace_rate=0.3)
-    val_data = SmartCacheDataset(data=val_files, transform=base_transforms, replace_rate=0.5)
-    test_data = SmartCacheDataset(data=test_files, transform=base_transforms, replace_rate=0.5)
+    train_data = SmartCacheDataset(data=train_files, transform=train_augm_transforms, replace_rate=0.8)
+    val_data = SmartCacheDataset(data=val_files, transform=base_transforms, replace_rate=0.8)
+    test_data = SmartCacheDataset(data=test_files, transform=base_transforms, replace_rate=0.8)
 
 
 
@@ -148,5 +148,61 @@ def build_train_val_test_loaders(data: list[dict[str, str]],
          DataLoader(val_data, batch_size=1, shuffle=False,num_workers=0, pin_memory=torch.cuda.is_available()),
          DataLoader(test_data, batch_size=1, shuffle=False, num_workers=0, pin_memory=torch.cuda.is_available())
    )
+
+
+def show_loss_eval_metric_history(history_path: str):
+
+    history = torch.load(history_path)
+
+    train_losses = history["train_losses"]
+    val_losses = history["val_losses"]
+
+    train_dices = history["train_dices"]
+    val_dices = history["val_dices"]
+
+    fig, axes = plt.subplots(1, 2, figsize=(14, 4))
+
+    # Loss plot
+    axes[0].plot(
+        range(1, len(train_losses)+1),
+        train_losses,
+        label="Train Loss"
+    )
+
+    axes[0].plot(
+        range(1, len(val_losses)+1),
+        val_losses,
+        label="Validation Loss"
+    )
+
+    axes[0].set_xlabel("Epoch")
+    axes[0].set_ylabel("Loss")
+    axes[0].set_title("Loss history")
+    axes[0].legend()
+    axes[0].grid(True)
+
+
+    # Dice plot
+    axes[1].plot(
+        range(1, len(train_dices)+1),
+        train_dices,
+        label="Train DiceCE"
+    )
+
+    axes[1].plot(
+        range(1, len(val_dices)+1),
+        val_dices,
+        label="Validation DiceCE"
+    )
+
+    axes[1].set_xlabel("Epoch")
+    axes[1].set_ylabel("DiceCE score")
+    axes[1].set_title("DiceCE history")
+    axes[1].legend()
+    axes[1].grid(True)
+
+
+    plt.tight_layout()
+    plt.show()
 
         

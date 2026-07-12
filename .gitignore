@@ -1,5 +1,7 @@
 # Ignore some folders
+checkpoint/
 data/
+models/
 xdata/
 results/
 
