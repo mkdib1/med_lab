@@ -16,7 +16,7 @@ env/
 venv/
 
 # Power point presentatio
-*.pptx
+# *.pptx
 
 # ---> Python
 # Byte-compiled / optimized / DLL files
