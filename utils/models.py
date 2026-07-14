@@ -1,5 +1,5 @@
 from monai.data import DataLoader
-from monai.networks.nets import UNet
+from monai.networks.nets import UNet, SegResNet
 from monai.losses import DiceCELoss, DiceFocalLoss
 from monai.metrics import DiceMetric
 from monai.utils import MetricReduction
@@ -41,6 +41,42 @@ def unet_model(dice_focal_loss=False):
         lr=1e-3,
         weight_decay=1e-4
     )
+    return model, loss_fn, optimizer
+
+
+def segresnet_model(dice_focal_loss=False):
+
+    model = SegResNet(
+        spatial_dims=3,
+        in_channels=1,
+        out_channels=1,
+        init_filters=16,
+        blocks_down=(1, 2, 2, 4),
+        blocks_up=(1, 1, 1),
+        dropout_prob=0.2
+    )
+
+
+    model = model.to(DEVICE)
+
+    if dice_focal_loss:
+
+        loss_fn = DiceFocalLoss(
+            sigmoid=True,
+            lambda_dice=1.0,
+            lambda_focal=1.0
+        )
+
+    else:
+
+        loss_fn = DiceCELoss(sigmoid=True)
+
+    optimizer = torch.optim.AdamW(
+        model.parameters(),
+        lr=1e-3,
+        weight_decay=1e-4
+    )
+
     return model, loss_fn, optimizer
 
 
