@@ -1,4 +1,3 @@
-from utils.augmentation import build_augmented_train_transforms
 from collections import Counter
 import numpy as np
 from pathlib import Path
@@ -7,11 +6,16 @@ from typing import Sequence, Union
 from matplotlib import pyplot as plt
 from monai.data import DataLoader, SmartCacheDataset
 from monai.data.meta_tensor import MetaTensor
+from monai.inferers import sliding_window_inference
 from monai.transforms import Compose
 import pandas as pd
 from sklearn.model_selection import train_test_split
 import torch
+from utils.augmentation import build_augmented_train_transforms
+from utils.models import unet_model
 
+
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def t1_masks_path_extractor(
@@ -71,23 +75,37 @@ def reorder_imgs_to_canonical_space(
 
 def plot_orient_distr(image_paths: Sequence[str]):
     
-    affine_lst = []
-    for path in image_paths:
-        affine_lst.append(nib.aff2axcodes(nib.load(path).affine))
+    orientations = [
+        "".join(nib.aff2axcodes(nib.load(path).affine))
+        for path in image_paths
+    ]
 
-    counts = Counter(affine_lst)
-    counts = pd.Series(affine_lst).value_counts()
+    counts = pd.Series(orientations).value_counts()
 
-    counts.plot(kind='bar')
+    fig, ax = plt.subplots(figsize=(8, 5))
 
-    plt.xlabel("Orientation")
-    plt.ylabel("Number of brain volumes")
-    plt.title("MRI orientation distribution")
-    plt.xticks(rotation=45)
+    bars = ax.bar(
+        counts.index,
+        counts.values,
+        width=0.7
+    )
+
+
+    ax.set_xlabel("Orientation")
+    ax.set_ylabel("Number of brain volumes")
+    ax.set_title("MRI orientation distribution")
+
+    ax.tick_params(axis="x", rotation=0)
+    ax.set_xlim(-0.5, len(counts)-0.5)
+
     plt.tight_layout()
     plt.show()
 
-    return counts.rename_axis("orientation").reset_index(name="count")
+    return (
+        counts
+        .rename_axis("orientation")
+        .reset_index(name="count")
+    )
 
 
 def shape_mismatch_indeces(images: Sequence[nib.Nifti1Image],
@@ -204,5 +222,59 @@ def show_loss_eval_metric_history(history_path: str):
 
     plt.tight_layout()
     plt.show()
+
+
+def show_predicted_lesion(model_path: str, 
+                        test_loader: DataLoader,
+                        num_batches_to_show: int = 1):
+
+    model, _, _ = unet_model()
+
+    checkpoint = torch.load(model_path, map_location=DEVICE)
+
+    model.load_state_dict(checkpoint["model_state_dict"])
+    model.eval()
+
+    test_iter = iter(test_loader)
+
+    for i in range(num_batches_to_show):
+
+        batch = next(test_iter)
+        image = batch["image"].to(DEVICE)
+        label = batch["label"].to(DEVICE)
+
+        with torch.no_grad():
+
+            pred = sliding_window_inference(
+                inputs=image,
+                roi_size=(128, 128, 64),
+                sw_batch_size=1,
+                predictor=model
+            )
+
+            pred = torch.sigmoid(pred)
+            pred = (pred > 0.5).float()
+
+            image_np = image.cpu().numpy()[0, 0]
+            label_np = label.cpu().numpy()[0, 0]
+            pred_np = pred.cpu().numpy()[0, 0]
+
+            z = image_np.shape[2] // 2
+
+            fig, ax = plt.subplots(1, 3, figsize=(15, 5))
+
+            ax[0].imshow(image_np[:, :, z].T, cmap="Greys_r", origin="lower")
+            ax[0].set_title(f"T1 MRI - batch {i+1}")
+
+            ax[1].imshow(label_np[:, :, z].T, cmap="Reds", origin="lower")
+            ax[1].set_title("Lesion: ground truth")
+
+            ax[2].imshow(pred_np[:, :, z].T, cmap="Reds", origin="lower")
+            ax[2].set_title("Lesion: prediction")
+
+            for a in ax:
+                a.axis("off")
+
+            plt.show()
 
         

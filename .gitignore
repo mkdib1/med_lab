@@ -3,11 +3,11 @@ checkpoint/
 data/
 models/
 xdata/
-results/
 
 # Data files
 *.csv
 *.nii.gz
+*.pth
 
 # Environments
 .venv
